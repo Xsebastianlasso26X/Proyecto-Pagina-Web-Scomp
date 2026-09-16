@@ -50,31 +50,47 @@ html {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 4rem;
-  background: rgba(7, 11, 18, 0.9);
+  padding: 0.8rem 4rem;
+  background: rgba(7, 11, 18, 0.95);
   backdrop-filter: blur(10px);
   position: fixed;
   width: 100%;
   top: 0;
+  left: 0;
   z-index: 1000;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.logo {
+  display: flex;
+  align-items: center;
+}
+
 .logo a {
-  font-family: var(--font-tech);
-  font-size: 1.8rem;
-  font-weight: 900;
-  color: #fff;
+  display: flex;
+  align-items: center;
   text-decoration: none;
 }
 
-.logo-s { color: var(--primary-red); }
-.logo-r { color: var(--primary-red); font-size: 1.2rem; vertical-align: super; }
+.navbar-logo {
+  height: 45px;
+  width: auto;
+  display: block;
+  object-fit: contain;
+  mix-blend-mode: screen; /* Mezcla el fondo oscuro de la imagen con la navbar */
+}
+
+nav {
+  display: flex;
+  align-items: center;
+}
 
 .nav-links {
   display: flex;
   list-style: none;
   gap: 2rem;
+  margin: 0;
+  padding: 0;
 }
 
 .nav-links a {
@@ -82,9 +98,11 @@ html {
   text-decoration: none;
   transition: color 0.3s;
   font-weight: 500;
+  padding-bottom: 4px;
 }
 
-.nav-links a:hover, .nav-links a.active {
+.nav-links a:hover, 
+.nav-links a.active {
   color: #fff;
   border-bottom: 2px solid var(--primary-red);
 }
@@ -96,6 +114,7 @@ html {
   padding: 0.6rem 1.2rem;
   border-radius: 4px;
   text-decoration: none;
+  white-space: nowrap;
   transition: all 0.3s ease;
 }
 
