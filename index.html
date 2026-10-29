@@ -54,7 +54,7 @@
     <div class="features-grid">
       <!-- Tarjeta 1: PC Lentos -->
       <div class="feature-card card-blue scroll-reveal">
-        <div class="card-title"><i class="fa-regular fa-square-check"></i> PC Lentos <br><span style="font-size: 0.8em; color: #60a5fa;">- Optimizamos</span></div>
+        <div class="card-title"><i class="fa-regular fa-square-check"></i> PC Lentos <br><span style="font-size: 0.8em; color: #60a5fa;">Optimizamos</span></div>
         <div class="card-body" style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <span class="loading-label" style="font-size: 0.85rem; letter-spacing: 1px;">RENDIMIENTO</span>
@@ -83,7 +83,7 @@
       <!-- Tarjeta 3: Errores de Software -->
       <div class="feature-card card-purple scroll-reveal">
         <div class="card-title"><i class="fa-regular fa-square-check"></i> Errores de Software</div>
-        <p class="card-desc" style="font-size: 0.9rem; color: #cbd5e1;">- Corregimos</p>
+        <p class="card-desc" style="font-size: 0.9rem; color: #cbd5e1;">Corregimos</p>
         <div class="error-window" style="margin-top: 8px; border: 1px solid #a855f7; border-radius: 6px; overflow: hidden; background: #1e1b4b;">
           <div class="window-header" style="background: #3b0764; padding: 4px 8px; font-size: 0.75rem; display: flex; justify-content: space-between;">
             <span>System Error Log</span> <span class="close-btn" style="color: #f87171;">✕</span>
@@ -236,38 +236,53 @@
       </div>
 
       <div class="contact-form-card scroll-reveal">
-        <form id="supportForm">
+        <form action="guardar_contacto.php" method="POST">
           <div class="form-row">
             <div class="form-group">
               <label for="nombre">Nombre y Apellido</label>
-              <input type="text" id="nombre" required />
+              <input type="text" id="nombre" name="nombre" required />
             </div>
+            <!-- CAMPO CÉDULA: Obligatorio y solo números -->
             <div class="form-group">
-              <label for="tipo">Tipo de Servicio</label>
-              <select id="tipo" required>
-                <option value="">Selecciona...</option>
-                <option value="remoto">Soporte Remoto</option>
-                <option value="presencial">Soporte Presencial</option>
-                <option value="mantenimiento">Mantenimiento</option>
-              </select>
+              <label for="cedula">Cédula (Solo números)</label>
+              <input type="text" id="cedula" name="cedula" pattern="[0-9]*" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="Ej: 12345678" required />
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label for="correo">Correo</label>
-              <input type="email" id="correo" required />
+              <label for="tipo">Tipo de Servicio</label>
+              <select id="tipo" name="tipo_servicio" required>
+                <option value="">Selecciona...</option>
+                <option value="Soporte Remoto">Soporte Remoto</option>
+                <option value="Soporte Presencial">Soporte Presencial</option>
+                <option value="Mantenimiento">Mantenimiento</option>
+              </select>
             </div>
+            <!-- CAMPO CORREO: Opcional (sin required) -->
             <div class="form-group">
-              <label for="mensaje">Mensaje</label>
-              <textarea id="mensaje" rows="4" required></textarea>
+              <label for="correo">Correo (Opcional)</label>
+              <input type="email" id="correo" name="correo" placeholder="correo@ejemplo.com" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <!-- CAMPO TELÉFONO: Obligatorio y solo números -->
+            <div class="form-group">
+              <label for="contacto_num">No. Contacto (Solo números)</label>
+              <input type="text" id="contacto_num" name="telefono" pattern="[0-9]*" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="Ej: 3001234567" required />
+            </div>
+            <!-- CAMPO DIRECCIÓN: Opcional (sin required) -->
+            <div class="form-group">
+              <label for="direccion">Dirección (Opcional)</label>
+              <input type="text" id="direccion" name="direccion" placeholder="Ej: Calle Principal # 12-34" />
             </div>
           </div>
 
           <div class="form-row align-end">
-            <div class="form-group">
-              <label for="contacto_num">No. Contacto</label>
-              <input type="text" id="contacto_num" value="+57 " required />
+            <div class="form-group" style="flex: 1;">
+              <label for="mensaje">Mensaje</label>
+              <textarea id="mensaje" name="mensaje" rows="2" required></textarea>
             </div>
             <button type="submit" class="btn-submit">Enviar</button>
           </div>
@@ -277,5 +292,28 @@
   </section>
 
   <script src="script.js"></script>
+
+  <!-- Script para mostrar la notificación flotante cuando el formulario se envíe con éxito -->
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('status') === 'success') {
+        const alertBox = document.createElement('div');
+        alertBox.innerHTML = `
+            <div style="position: fixed; bottom: 30px; right: 30px; background: #0f172a; border: 2px solid #38bdf8; color: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 1000; font-family: 'Roboto', sans-serif; max-width: 350px; animation: fadeIn 0.5s;">
+                <h4 style="color: #38bdf8; margin: 0 0 8px 0; font-family: 'Orbitron', sans-serif;"><i class="fa-solid fa-circle-check"></i> ¡Solicitud enviada con éxito!</h4>
+                <p style="margin: 0; font-size: 0.9rem; color: #cbd5e1;">Pronto nos pondremos en contacto contigo.</p>
+            </div>
+        `;
+        document.body.appendChild(alertBox);
+
+        setTimeout(() => {
+            alertBox.style.transition = 'opacity 0.5s ease';
+            alertBox.style.opacity = '0';
+            setTimeout(() => alertBox.remove(), 500);
+        }, 5000);
+        
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  </script>
 </body>
 </html>
