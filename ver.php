@@ -39,7 +39,7 @@ $link_whatsapp = "https://wa.me/{$telefono_limpio}?text=" . urlencode($mensaje_w
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Vista de Hoja de Vida - SCOMP</title>
+    <title>Hoja de Vida y Cuenta de Cobro - SCOMP</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
         body { 
@@ -67,6 +67,17 @@ $link_whatsapp = "https://wa.me/{$telefono_limpio}?text=" . urlencode($mensaje_w
         .financial-item span { display: block; color: #94a3b8; font-size: 0.8rem; margin-bottom: 5px; }
         .financial-item strong { font-size: 1.1rem; color: #38bdf8; font-family: 'Orbitron', sans-serif; }
         
+        /* Estilos de Miniaturas de la Galería */
+        .galeria-imgs { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
+        .galeria-imgs img { height: 130px; width: 130px; object-fit: cover; border-radius: 6px; border: 1px solid #334155; cursor: pointer; transition: transform 0.2s; }
+        .galeria-imgs img:hover { transform: scale(1.05); border-color: #38bdf8; }
+
+        /* Modal para ver la imagen grande en pantalla */
+        #modal-zoom { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); text-align: center; padding-top: 40px; }
+        #modal-zoom img { max-width: 90%; max-height: 85vh; border-radius: 8px; border: 2px solid #38bdf8; box-shadow: 0 0 20px rgba(56,189,248,0.5); }
+        #modal-zoom span { position: absolute; top: 20px; right: 35px; color: #f87171; font-size: 40px; font-weight: bold; cursor: pointer; font-family: sans-serif; }
+        #modal-zoom span:hover { color: #fff; }
+
         .btn-editar { background: #38bdf8; color: #0b0f19; font-weight: bold; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; margin-top: 20px; font-size: 0.95rem; font-family: 'Orbitron', sans-serif; text-align: center; text-decoration: none; display: block; }
         .btn-editar:hover { background: #0ea5e9; }
         .btn-imprimir { background: #10b981; color: #fff; font-weight: bold; border: none; padding: 11px; width: 100%; border-radius: 8px; cursor: pointer; margin-top: 10px; text-align: center; text-decoration: none; display: block; }
@@ -79,14 +90,18 @@ $link_whatsapp = "https://wa.me/{$telefono_limpio}?text=" . urlencode($mensaje_w
         @media print {
             body { background: #fff; color: #000; padding: 0; background-image: none; }
             .view-container { background: #fff; border: none; box-shadow: none; width: 100%; max-width: 100%; padding: 10px; }
-            .info-group { background: #f8fafc; border: 1px solid #ccc; }
+            .info-group { background: #f8fafc; border: 1px solid #ccc; page-break-inside: avoid; }
             .info-group span { color: #000; }
             .info-group label { color: #555; }
-            .btn-editar, .btn-imprimir, .btn-whatsapp, .btn-volver { display: none !important; }
+            .btn-editar, .btn-imprimir, .btn-whatsapp, .btn-volver, #modal-zoom { display: none !important; }
             h2 { color: #000; }
             .section-title { color: #000; border-bottom: 2px solid #000; }
-            .financial-box { border: 1px solid #000; background: #f8fafc; }
+            .financial-box { border: 1px solid #000; background: #f8fafc; page-break-inside: avoid; }
             .financial-item strong { color: #000; }
+            
+            /* IMÁGENES GRANDES EN PDF */
+            .galeria-imgs { justify-content: center; gap: 15px; page-break-inside: auto; }
+            .galeria-imgs img { height: auto !important; width: 100% !important; max-width: 450px !important; display: block; margin: 15px auto; border: 1px solid #000; border-radius: 4px; page-break-inside: avoid; }
         }
     </style>
 </head>
@@ -96,7 +111,7 @@ $link_whatsapp = "https://wa.me/{$telefono_limpio}?text=" . urlencode($mensaje_w
             <img src="logo-scomp.jpg" alt="SCOMP Logo" class="logo-img">
         </div>
 
-        <h2>Detalle de Hoja de Vida y Soporte #<?php echo $solicitud['id']; ?></h2>
+        <h2>Hoja de Vida y Cuenta de Cobro #<?php echo $solicitud['id']; ?></h2>
         
         <p style="margin-bottom: 20px; color: #94a3b8; text-align: center; line-height: 1.6;">
             Cliente: <strong><?php echo htmlspecialchars($solicitud['nombre']); ?></strong> | 
@@ -136,6 +151,30 @@ $link_whatsapp = "https://wa.me/{$telefono_limpio}?text=" . urlencode($mensaje_w
         <div class="info-group" style="margin-bottom: 15px;">
             <label>PROGRAMAS INSTALADOS / REQUERIDOS</label>
             <span><?php echo nl2br(htmlspecialchars($solicitud['programas_instalados'] ?: 'Ninguno')); ?></span>
+        </div>
+
+        <!-- GALERÍA DE FOTOGRAFÍAS CON ZOOM -->
+        <?php
+        $stmt_f_ver = $conexion->prepare("SELECT * FROM fotos_equipo WHERE solicitud_id = ?");
+        $stmt_f_ver->execute([$id]);
+        $fotos_ver = $stmt_f_ver->fetchAll(PDO::FETCH_ASSOC);
+        ?>
+
+        <?php if (count($fotos_ver) > 0): ?>
+            <div class="info-group" style="margin-bottom: 15px; text-align: center;">
+                <label>FOTOGRAFÍAS DEL ESTADO DEL EQUIPO (Haz clic en una foto para verla en grande)</label>
+                <div class="galeria-imgs">
+                    <?php foreach ($fotos_ver as $fv): ?>
+                        <img src="uploads/<?php echo htmlspecialchars($fv['nombre_archivo']); ?>" alt="Foto Equipo" onclick="abrirZoom(this.src)">
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <!-- MODAL ZOOM -->
+        <div id="modal-zoom" onclick="cerrarZoom()">
+            <span onclick="cerrarZoom()">&times;</span>
+            <img id="img-ampliada" src="">
         </div>
 
         <div class="section-title">2. Diagnóstico, Servicio y Cuenta de Cobro</div>
@@ -181,5 +220,15 @@ $link_whatsapp = "https://wa.me/{$telefono_limpio}?text=" . urlencode($mensaje_w
         <button onclick="window.print();" class="btn-imprimir">🖨️ Imprimir / Guardar Comprobante PDF</button>
         <a href="admin.php" class="btn-volver">← Volver al Panel de Control</a>
     </div>
+
+    <script>
+        function abrirZoom(src) {
+            document.getElementById('img-ampliada').src = src;
+            document.getElementById('modal-zoom').style.display = 'block';
+        }
+        function cerrarZoom() {
+            document.getElementById('modal-zoom').style.display = 'none';
+        }
+    </script>
 </body>
 </html>

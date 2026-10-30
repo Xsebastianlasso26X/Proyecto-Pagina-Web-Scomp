@@ -26,9 +26,40 @@ try {
         $estado_pago = $_POST['estado_pago'];
         $estado_servicio = $_POST['estado_servicio'];
 
+        // Actualizar datos generales de la solicitud
         $sql_update = "UPDATE solicitudes SET marca_pc = ?, modelo_pc = ?, serial_pc = ?, sistema_operativo = ?, accesorios = ?, programas_instalados = ?, falla_reportada = ?, observaciones_pc = ?, precio_servicio = ?, abono = ?, saldo_pendiente = ?, estado_pago = ?, estado_servicio = ? WHERE id = ?";
         $stmt = $conexion->prepare($sql_update);
         $stmt->execute([$marca, $modelo, $serial, $so, $accesorios, $programas, $falla, $observaciones, $precio, $abono, $saldo_pendiente, $estado_pago, $estado_servicio, $id]);
+
+        // Procesar múltiples fotos (hasta un límite de 6 imágenes en total)
+        if (isset($_FILES['fotos_equipo'])) {
+            $directorio_subida = "uploads/";
+            if (!is_dir($directorio_subida)) {
+                mkdir($directorio_subida, 0777, true);
+            }
+
+            $stmt_conteo = $conexion->prepare("SELECT COUNT(*) FROM fotos_equipo WHERE solicitud_id = ?");
+            $stmt_conteo->execute([$id]);
+            $total_actual_fotos = $stmt_conteo->fetchColumn();
+
+            $archivos = $_FILES['fotos_equipo'];
+            $subidas_exitosas = 0;
+
+            for ($i = 0; $i < count($archivos['name']); $i++) {
+                if ($archivos['error'][$i] == 0) {
+                    if (($total_actual_fotos + $subidas_exitosas) < 6) {
+                        $extension = pathinfo($archivos['name'][$i], PATHINFO_EXTENSION);
+                        $nombre_unico = "equipo_" . $id . "_" . time() . "_" . rand(1000, 9999) . "." . $extension;
+                        
+                        if (move_uploaded_file($archivos['tmp_name'][$i], $directorio_subida . $nombre_unico)) {
+                            $stmt_foto_ins = $conexion->prepare("INSERT INTO fotos_equipo (solicitud_id, nombre_archivo) VALUES (?, ?)");
+                            $stmt_foto_ins->execute([$id, $nombre_unico]);
+                            $subidas_exitosas++;
+                        }
+                    }
+                }
+            }
+        }
 
         header("Location: admin.php?actualizado=1");
         exit();
@@ -68,8 +99,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['enviar_email_auto'])) 
         $solicitud['marca_pc'],
         $solicitud['modelo_pc'],
         $solicitud['serial_pc'],
+        $solicitud['sistema_operativo'],
+        $solicitud['accesorios'],
+        $solicitud['programas_instalados'],
         $solicitud['falla_reportada'],
-        $solicitud['observaciones_pc']
+        $solicitud['observaciones_pc'],
+        $solicitud['estado_pago'],
+        $solicitud['estado_servicio'],
+        $solicitud['cedula'],
+        $solicitud['telefono'],
+        $solicitud['direccion'],
+        $solicitud['id']
     );
 
     if ($resultado === true) {
@@ -117,6 +157,17 @@ $link_whatsapp = "https://wa.me/{$telefono_limpio}?text=" . urlencode($mensaje_w
         .financial-item span { display: block; color: #94a3b8; font-size: 0.8rem; margin-bottom: 5px; }
         .financial-item strong { font-size: 1.1rem; color: #38bdf8; font-family: 'Orbitron', sans-serif; }
         
+        /* Galería en edición con zoom */
+        .galeria-editar { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+        .galeria-editar img { height: 90px; width: 90px; object-fit: cover; border-radius: 6px; border: 1px solid #334155; cursor: pointer; transition: transform 0.2s; }
+        .galeria-editar img:hover { transform: scale(1.05); border-color: #38bdf8; }
+
+        /* Modal para zoom */
+        #modal-zoom { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); text-align: center; padding-top: 40px; }
+        #modal-zoom img { max-width: 90%; max-height: 85vh; border-radius: 8px; border: 2px solid #38bdf8; box-shadow: 0 0 20px rgba(56,189,248,0.5); }
+        #modal-zoom span { position: absolute; top: 20px; right: 35px; color: #f87171; font-size: 40px; font-weight: bold; cursor: pointer; font-family: sans-serif; }
+        #modal-zoom span:hover { color: #fff; }
+
         .btn-guardar { background: #38bdf8; color: #0b0f19; font-weight: bold; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; margin-top: 20px; font-size: 0.95rem; font-family: 'Orbitron', sans-serif; }
         .btn-guardar:hover { background: #0ea5e9; }
         .btn-imprimir { background: #10b981; color: #fff; font-weight: bold; border: none; padding: 11px; width: 100%; border-radius: 8px; cursor: pointer; margin-top: 10px; text-align: center; text-decoration: none; display: block; }
@@ -133,12 +184,17 @@ $link_whatsapp = "https://wa.me/{$telefono_limpio}?text=" . urlencode($mensaje_w
             .edit-container { background: #fff; border: none; box-shadow: none; width: 100%; max-width: 100%; padding: 10px; }
             input, select, textarea { background: transparent; border: none; border-bottom: 1px solid #ccc; color: #000; padding: 2px; }
             label { color: #555; font-weight: bold; }
-            .btn-guardar, .btn-imprimir, .btn-correo, .btn-whatsapp, .btn-volver, hr, form.form-correo { display: none !important; }
+            .btn-guardar, .btn-imprimir, .btn-correo, .btn-whatsapp, .btn-volver, hr, form.form-correo, input[type="file"], .eliminar-foto-btn, #modal-zoom { display: none !important; }
             .company-header { display: block; }
             h2 { color: #000; }
             .section-title { color: #000; border-bottom: 2px solid #000; }
-            .financial-box { border: 1px solid #000; background: #f8fafc; }
+            .financial-box { border: 1px solid #000; background: #f8fafc; page-break-inside: avoid; }
             .financial-item strong { color: #000; }
+            
+            /* IMÁGENES GRANDES EN PDF DESDE EDITAR */
+            .galeria-editar { display: block; text-align: center; }
+            .galeria-editar div { display: block; margin-bottom: 20px; page-break-inside: avoid; }
+            .galeria-editar img { height: auto !important; width: 100% !important; max-width: 450px !important; display: block; margin: 10px auto; border: 1px solid #000; }
         }
     </style>
     <script>
@@ -150,6 +206,14 @@ $link_whatsapp = "https://wa.me/{$telefono_limpio}?text=" . urlencode($mensaje_w
             document.getElementById('txt_total').innerText = '$' + precio.toLocaleString('es-CO');
             document.getElementById('txt_abono').innerText = '$' + abono.toLocaleString('es-CO');
             document.getElementById('txt_saldo').innerText = '$' + saldo.toLocaleString('es-CO');
+        }
+
+        function abrirZoom(src) {
+            document.getElementById('img-ampliada').src = src;
+            document.getElementById('modal-zoom').style.display = 'block';
+        }
+        function cerrarZoom() {
+            document.getElementById('modal-zoom').style.display = 'none';
         }
     </script>
 </head>
@@ -167,7 +231,7 @@ $link_whatsapp = "https://wa.me/{$telefono_limpio}?text=" . urlencode($mensaje_w
             <img src="logo-scomp.jpg" alt="SCOMP Logo" class="logo-img">
         </div>
 
-        <h2>Hoja de Vida y Soporte #<?php echo $solicitud['id']; ?></h2>
+        <h2>Hoja de Vida y Cuenta de Cobro #<?php echo $solicitud['id']; ?></h2>
         
         <p style="margin-bottom: 20px; color: #94a3b8; text-align: center; line-height: 1.6;">
             Cliente: <strong><?php echo htmlspecialchars($solicitud['nombre']); ?></strong> | 
@@ -184,7 +248,7 @@ $link_whatsapp = "https://wa.me/{$telefono_limpio}?text=" . urlencode($mensaje_w
             <div style="background: #7f1d1d; color: #fca5a5; padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center; font-weight: bold;"><?php echo $error_correo; ?></div>
         <?php endif; ?>
 
-        <form action="editar.php" method="POST">
+        <form action="editar.php" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="id" value="<?php echo $solicitud['id']; ?>">
 
             <div class="section-title">1. Especificaciones del Equipo (Hoja de Vida)</div>
@@ -214,9 +278,40 @@ $link_whatsapp = "https://wa.me/{$telefono_limpio}?text=" . urlencode($mensaje_w
                 </div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" style="margin-bottom: 15px;">
                 <label>Programas Instalados / Requeridos</label>
                 <textarea name="programas_instalados" rows="2"><?php echo htmlspecialchars($solicitud['programas_instalados']); ?></textarea>
+            </div>
+
+            <!-- SECCIÓN FOTOS CON ZOOM -->
+            <div class="form-group" style="background: #0b0f19; padding: 15px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 15px;">
+                <label style="color: #38bdf8; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; margin-bottom: 8px;">📷 Fotografías del Estado del Equipo (Haz clic para ver en grande - Máx 6)</label>
+                <input type="file" name="fotos_equipo[]" accept="image/*" multiple style="background: #121826; border: 1px solid #334155; padding: 8px; cursor: pointer; width: 100%;">
+                
+                <?php
+                $stmt_f_actuales = $conexion->prepare("SELECT * FROM fotos_equipo WHERE solicitud_id = ?");
+                $stmt_f_actuales->execute([$id]);
+                $fotos_guardadas = $stmt_f_actuales->fetchAll(PDO::FETCH_ASSOC);
+                ?>
+
+                <?php if (count($fotos_guardadas) > 0): ?>
+                    <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 12px; margin-bottom: 8px;">Galería actual (<?php echo count($fotos_guardadas); ?> de 6):</p>
+                    <div class="galeria-editar">
+                        <?php foreach ($fotos_guardadas as $f): ?>
+                            <div style="position: relative; text-align: center;">
+                                <img src="uploads/<?php echo htmlspecialchars($f['nombre_archivo']); ?>" alt="Foto" onclick="abrirZoom(this.src)">
+                                <br class="eliminar-foto-btn">
+                                <a href="eliminar_foto.php?id_foto=<?php echo $f['id']; ?>&id_solicitud=<?php echo $id; ?>" onclick="return confirm('¿Eliminar esta foto?');" class="eliminar-foto-btn" style="color: #f87171; font-size: 0.75rem; text-decoration: none;">Eliminar</a>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- MODAL ZOOM -->
+            <div id="modal-zoom" onclick="cerrarZoom()">
+                <span onclick="cerrarZoom()">&times;</span>
+                <img id="img-ampliada" src="">
             </div>
 
             <div class="section-title">2. Diagnóstico, Servicio y Cuenta de Cobro</div>
