@@ -1,13 +1,8 @@
 <?php
-/*$servidor = "localhost";
+$servidor = "localhost";
 $base_datos = "scomp_db";
 $usuario = "root";
-$password = "";*/
-$servidor = "localhost";
-$base_datos = "educxqsw_sebas";
-$usuario = "educxqsw_educxqsw";
-$password = "]Lb;%da=!!}QcV+O";
-
+$password = "";
 try {
     // Conexión con PDO
     $conexion = new PDO("mysql:host=$servidor;dbname=$base_datos;charset=utf8", $usuario, $password);
