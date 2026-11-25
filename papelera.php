@@ -5,10 +5,14 @@ if (!isset($_SESSION['admin_logueado']) || $_SESSION['admin_logueado'] !== true)
     exit();
 }
 
-$servidor = "localhost";
+/*$servidor = "localhost";
 $base_datos = "scomp_db";
 $usuario = "root";
-$password = "";
+$password = "";*/
+$servidor = "localhost";
+$base_datos = "educxqsw_sebas";
+$usuario = "educxqsw_educxqsw";
+$password = "]Lb;%da=!!}QcV+O";
 
 try {
     $conexion = new PDO("mysql:host=$servidor;dbname=$base_datos;charset=utf8", $usuario, $password);

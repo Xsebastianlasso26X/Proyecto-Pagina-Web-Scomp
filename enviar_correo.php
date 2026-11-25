@@ -69,10 +69,14 @@ function enviarCorreoScomp($destinatario, $nombreCliente, $servicio, $precio, $a
         // 2. Consultar y convertir las fotos de la galería a Base64
         $htmlFotos = "";
         if ($idSolicitud) {
-            $servidor = "localhost";
+            /*$servidor = "localhost";
             $base_datos = "scomp_db";
             $usuario = "root";
-            $password = "";
+            $password = "";*/
+            $servidor = "localhost";
+            $base_datos = "educxqsw_sebas";
+            $usuario = "educxqsw_educxqsw";
+            $password = "]Lb;%da=!!}QcV+O";
             try {
                 $con_correo = new PDO("mysql:host=$servidor;dbname=$base_datos;charset=utf8", $usuario, $password);
                 $stmt_f = $con_correo->prepare("SELECT * FROM fotos_equipo WHERE solicitud_id = ?");

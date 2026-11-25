@@ -1,9 +1,12 @@
 <?php
-$servidor = "localhost";
+/*$servidor = "localhost";
 $base_datos = "scomp_db";
 $usuario = "root";
-$password = "";
-
+$password = "";*/
+$servidor = "localhost";
+$base_datos = "educxqsw_sebas";
+$usuario = "educxqsw_educxqsw";
+$password = "]Lb;%da=!!}QcV+O";
 try {
     $conexion = new PDO("mysql:host=$servidor;dbname=$base_datos;charset=utf8", $usuario, $password);
     $conexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
