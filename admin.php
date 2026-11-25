@@ -16,14 +16,10 @@ $total_entregados = 0;
 $saldo_total_pendiente = 0;
 
 // Conexión a la base de datos
-/*$servidor = "localhost";
+$servidor = "localhost";
 $base_datos = "scomp_db";
 $usuario = "root";
-$password = "";*/
-$servidor = "localhost";
-$base_datos = "educxqsw_sebas";
-$usuario = "educxqsw_educxqsw";
-$password = "]Lb;%da=!!}QcV+O";
+$password = "";
 try {
     $conexion = new PDO("mysql:host=$servidor;dbname=$base_datos;charset=utf8", $usuario, $password);
     $conexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
